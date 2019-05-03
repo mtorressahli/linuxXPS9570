@@ -95,10 +95,9 @@ Enable `dhcpcd` (disable later when enabling `NetworkManager`)
 ```
 # systemctl enable dhcpcd
 ```
-## Passwd and user
+## Passwd for root
 ```
 # passwd
-# useradd -g users -G wheel,storage,power -m manuel
 ```
 ## GRUB
 ```
@@ -161,16 +160,22 @@ yaourt -S pamac-aur yay
 
 ### KDE
 
+First install Xorg
+
 ```
-pacman -Syu kde-applications-meta plasma-meta plasma-wayland-session sddm
-systemctl enable sddm
+# pacman -Syu xorg xorg-init
+```
+
+```
+# pacman -Syu kde-applications plasma plasma-wayland-session sddm
+# systemctl enable sddm
 ```
 
 ### GNOME
 
 ```
-sudo pacman -S gnome gnome-extra
-sudo systemctl enable gdm
+# pacman -S gnome gnome-extra
+# systemctl enable gdm
 ```
 
 
