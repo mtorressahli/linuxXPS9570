@@ -1,2 +1,397 @@
 # linuxXPS9570
-Arch in Dell XPS 9570
+
+My installation of Linux in Dell XPS 9570. I am writing these notes for personal use and **I have not completed them yet**. If you are here by chance, you may make use of them but they are fitted to my specific experience and needs and I would not be able to help with anything (because I am not a particularly experienced linux user).
+
+Some general characteristics assumed:
+
++ Keyboard = UK; language = UK English; timezone = UK London.
++ Using wired internet connection
+
+# Installation
+
+Check internet connection
+```
+ping -c 3 archlinux.org
+```
+Use `reflector` package to set local fast mirrors. (This is 'automated' and many advise against it)
+```
+pacman -Syy
+pacman -S reflector
+reflector -c "United Kingdom" -f 12 -l 10 -n 12 --save /etc/pacman.d/mirrorlist
+```
+partition disk (mine is `nvme0n1`)
+```
+cgdisk /dev/nvme0n1
+```
+Use existing EFI for dual-boot with Windows 10 (in my case `nvme0n1p2`) and no `swap`. Check EFI partition is at least 500mb! Mine wasn't and, as I do not know much about disk management, I used MiniTool Partition Wizard from Windows to
+
+1. Shrink Win10 Partition "upwards"
+
+
+# Set up
+
+## Packages
+
+# Basic system settings
+
+## Root
+
+uncomment `# %wheel ALL=(ALL) ALL` in `visudo`
+
+### Optimise building
+
+Modify `CFLAGS` and `CXXFLAGS` in `/etc/makepkg.conf` replacing any `-march` and `-mtune` with `march=native`.
+
+ REPLACE `update-grub` WITH ARCH COMMAND
+```
+sudo sed -i 's/CFLAGS="-march=x86-64 -mtune=generic/CFLAGS="-march=native/g' /etc/makepkg.conf
+sudo sed -i 's/CXXFLAGS="-march=x86-64 -mtune=generic/CXXFLAGS="-march=native/g' /etc/makepkg.conf
+sudo sed -i 's/#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/g' /etc/makepkg.conf
+sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet/GRUB_CMDLINE_LINUX_DEFAULT="quiet CONFIG_DEVMEM=y CONFIG_X86_MSR=y/g' /etc/default/grub && sudo update-grub
+```
+
+## Pamac and yay
+
+```
+sudo pacman -S --needed base-devel git wget yajl
+cd /tmp
+git clone https://aur.archlinux.org/package-query.git
+cd package-query/
+makepkg -si && cd /tmp/
+git clone https://aur.archlinux.org/yaourt.git
+cd yaourt/
+makepkg -si
+
+yaourt -S pamac-aur yay
+
+```
+
+
+## Desktop Environment
+
+### KDE
+
+```
+pacman -Syu kde-applications-meta plasma-meta plasma-wayland-session sddm
+systemctl enable sddm
+```
+
+### GNOME
+
+```
+sudo pacman -S gnome gnome-extra
+sudo systemctl enable gdm
+```
+
+
+## Grub customizer
+
+```
+pamac install grub-customizer
+```
+
+Run `sudo nano /etc/pacman.conf` and uncomment [multilib] and the next (not the testing!).
+
+
+
+### Install yay
+
+```
+yaourt -S pamac yay
+```
+
+## CPU and Thermals
+
+Some tools:
+
+```
+yay -S thermald powertop s-tui mprime xsensors
+#sudo systemctl enable --now thermald
+#sudo systemctl start thermald
+sudo powertop
+```
+
+
+### Dell Power Management
+
+```
+pamac install libsmbios
+yay i8kutils dell-smm-hwmon-i8kutils
+```
+
+```
+sudo smbios-thermal-ctl -g
+sudo smbios-thermal-ctl -i
+sudo smbios-thermal-ctl --set-thermal-mode=Balanced
+```
+
+### Dell Hwmon sensors
+
+```
+modinfo dell-smm-hwmon | grep '^description'
+modprobe dell-smm-hwmon ignore_dmi=1
+```
+You can make these settings permanent by adding the following to `/etc/modprobe.d/dell.conf`:
+
+```
+sudo su
+echo 'options dell-smm-hwmon ignore_dmi=1' >> /etc/modprobe.d/dell.conf
+```
+
+And also by making the HWMON_MODULES variable appears like so in `/etc/conf.d/lm_sensors`:
+```
+sudo su
+echo 'HWMON_MODULES="coretemp dell-smm-hwmon"' >> /etc/conf.d/lm_sensors
+```
+
+
+### Fan Control
+
+```
+yay dell-bios-fan-control
+sudo systemctl enable dell-bios-fan-control
+
+sudo modprobe -v i8k
+sudo nano /etc/modprobe.d/dell-smm-hwmon.conf
+```
+```
+sudo modprobe dell-smm-hwmon restricted=0
+```
+
+```
+sudo echo 'options i8k force=1' >> /etc/modprobe.d/i8k.conf
+
+sudo echo 'i8k' >> /etc/modules-load.d/i8k.conf
+```
+
+```
+sudo nano /etc/i8kutils/i8kmon.conf
+
+sudo systemctl enable --now i8kmon
+sudo systemctl start i8kmon
+
+```
+
+### Suspend
+```
+cat /sys/power/mem_sleep
+echo deep|sudo tee /sys/power/mem_sleep
+
+sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet/GRUB_CMDLINE_LINUX_DEFAULT="quiet mem_sleep_default=deep/g' /etc/default/grub  && sudo update-grub
+```
+
+#### After suspend
+
+Edit `/etc/systemd/system/root-suspend.service` and `systemctl enable --now root-suspend`.
+
+```
+[Unit]
+Description = Local system resume actions
+After = suspend.taget sleep.target
+
+[Service]
+Type = simple
+ExecStart = /usr/bin/sleep .3
+ExcecStartPost = /usr/bin/dell-bios-fan-control 1 ; /usr/bin/dell-bios-fan-control 0 ; echo -e 'power on' | bluetoothctl
+
+[Install]
+WantedBy = suspend.target sleep.target
+
+```
+
+### TLP, Thermald and Powertop
+
+```
+yay -S tlp thermald powertop
+
+sudo systemctl enable --now tcl
+sudo systemctl enable --now tlp
+sudo systemctl enable --now tlp-sleep
+sudo systemctl enable --now thermald
+sudo systemctl enable --now powertop
+```
+#### Thermald
+```
+sudo nano /etc/thermald/thermal-conf.xml
+```
+
+### Throttled or `lenovo-throttling-fix-git`
+
+```
+yay -S throttled
+sudo systemctl enable --now lenovo_fix.service
+```
+And edit `/etc/lenovo_fix.conf` (at least that's its name by 26 April 2019) as desired. My current setup is
+
+```
+[GENERAL]
+# Enable or disable the script execution
+Enabled: True
+# SYSFS path for checking if the system is running on AC power
+Sysfs_Power_Path: /sys/class/power_supply/AC*/online
+
+## Settings to apply while connected to Battery power
+[BATTERY]
+# Update the registers every this many seconds
+Update_Rate_s: 30
+# Max package power for time window #1
+PL1_Tdp_W: 44
+# Time window #1 duration
+PL1_Duration_s: 28
+# Max package power for time window #2
+PL2_Tdp_W: 44
+# Time window #2 duration
+PL2_Duration_S: 0.002
+# Max allowed temperature before throttling
+Trip_Temp_C: 85
+# Set cTDP to normal=0, down=1 or up=2 (EXPERIMENTAL)
+cTDP: 2
+
+## Settings to apply while connected to AC power
+[AC]
+# Update the registers every this many seconds
+Update_Rate_s: 5
+# Max package power for time window #1
+PL1_Tdp_W: 44
+# Time window #1 duration
+PL1_Duration_s: 28
+# Max package power for time window #2
+PL2_Tdp_W: 44
+# Time window #2 duration
+PL2_Duration_S: 0.002
+# Max allowed temperature before throttling
+Trip_Temp_C: 95
+# Set HWP energy performance hints to 'performance' on high load (EXPERIMENTAL)
+HWP_Mode: True
+# Set cTDP to normal=0, down=1 or up=2 (EXPERIMENTAL)
+cTDP: 2
+
+[UNDERVOLT.BATTERY]
+# CPU core voltage offset (mV)
+CORE: -60
+# Integrated GPU voltage offset (mV)
+GPU: -25
+# CPU cache voltage offset (mV)
+CACHE: -60
+# System Agent voltage offset (mV)
+UNCORE: 0
+# Analog I/O voltage offset (mV)
+ANALOGIO: 0
+
+[UNDERVOLT.AC]
+# CPU core voltage offset (mV)
+CORE: -60
+# Integrated GPU voltage offset (mV)
+GPU: -25
+# CPU cache voltage offset (mV)
+CACHE: -60
+# System Agent voltage offset (mV)
+UNCORE: 0
+# Analog I/O voltage offset (mV)
+ANALOGIO: 0
+
+# [ICCMAX.AC]
+# # CPU core max current (A)
+# CORE: 
+# # Integrated GPU max current (A)
+# GPU: 
+# # CPU cache max current (A)
+# CACHE: 
+
+# [ICCMAX.BATTERY]
+# # CPU core max current (A)
+# CORE: 
+# # Integrated GPU max current (A)
+# GPU: 
+# # CPU cache max current (A)
+# CACHE: 
+
+```
+
+Monitor with
+```
+sudo /usr/lib/throttled/lenovo_fix.py --monitor
+```
+
+### Powertop
+
+```
+cat << EOF | sudo tee /etc/systemd/system/powertop.service
+[Unit]
+Description=PowerTOP auto tune
+
+[Service]
+Type=idle
+Environment="TERM=dumb"
+ExecStart=/usr/sbin/powertop --auto-tune
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable powertop.service
+```
+
+## Devices
+
+### Camera(s) NOT WORKING
+
+The camera uses the relatively new IPU3 drivers. Have not been able to make it work yet. (It seems that additionally to the kernel support it needs some *userspace* support which is being implemented, for example, in the `libcamera` package.) In any case adding
+
+```
+ipu3-csi2
+ipu3-imgu
+ipu3
+ipu3*
+```
+
+to `/etc/modules-load.d/webcam.conf` seems to be in the right direction.
+
+### Display
+
+#### HiDPI — GNOME
+
+Since GNOME only manages scaling by integers, a screen like this one (relatively not that HiDPI in relatively small form factor) is better setup combining xrandr with GNOME scaling. First set scaling at the maximum convenient (2) and then 'zooming out' with xrandr (1.75x1.75). See the [Arch wiki for HiDPI](https://wiki.archlinux.org/index.php/HiDPI#Desktop_environments)
+```
+gsettings set org.gnome.settings-daemon.plugins.xsettings overrides "[{'Gdk/WindowScalingFactor', <2>}]"
+gsettings set org.gnome.desktop.interface scaling-factor 2
+xrandr --output eDP1 --scale 1.75x1.75
+```
+
+### Bluetooth
+
+As of 25th of April 2019, it is necessary to install `bluez-git` (5.50.r295.g9e6da22ed-1 > 5.50-264-g750a26cd9) instead of `bluez` to make A2DP audio work with bluetooth headphones. Then, as commented [here](https://aur.archlinux.org/packages/bluez-git/#comment-688092), a manual fix is still required, modifying `/usr/lib/systemd/system/bluetooth.service` to change `ExecStart=/usr/lib/bluetooth/bluetoothd` to `ExecStart=/usr/lib/bluetoothd`. I also found necessary to change `#AutoEnable=false` to `AutoEnable=true` in `/etc/bluetooth/main.conf` so bluetooth would be enabled after suspension.
+
+```
+yay -S bluez-git
+sudo sed -i 's_ExecStart=/usr/lib/bluetooth/bluetoothd_ExecStart=/usr/lib/bluetoothd_g' /usr/lib/systemd/system/bluetooth.service
+sudo sed -i 's/#AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
+```
+
+## Software
+
+```
+yay -Syu r texlive-bin texlive-core texlive-latexextra texlive-bibtexextra biber texlive-langextra texlive-fontsextra texlive-formatsextra texlive-humanities texlive-publishers texlive-pstricks texlive-science texlive-science virtualbox virtualbox-guest-iso virtualbox-host-modules-arch virtualbox-sdk telegram-desktop libreoffice-fresh libreoffice-fresh-en-gb
+```
+```
+yay -Syu tk gcc-fortran ed dialog java-runtime perl-tk psutils python2-pygments texlive-pictures java-environment virtualbox-ext-vnc ttf-opensans pstoedit libmythes beanshell unixodbc postgresql-libs mariadb-libs coin-or-mp gnome-shell-extension-appindicator-git libappindicator-gtk3
+```
+
+
+```
+yay -Syyu rstudio-desktop dropbox mendeleydesktop spotify skypeforlinux-stable-bin sublime-text-3-imfix tixati whatsapp-nativefier
+```
+
+### Sublime-text
+
+#### Package Control
+
+```
+import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe013ee18cced0ef93d5f746d80ef60'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) 
+```
+
+## Firmware updates
+```
+yay -S fwupd
+```
