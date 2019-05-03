@@ -115,13 +115,18 @@ Enable `dhcpcd` (disable later when enabling `NetworkManager`)
 
 # Set up
 
-## Packages
-
-# Basic system settings
-
 ## Root
 
-uncomment `# %wheel ALL=(ALL) ALL` in `visudo`
+Login as `root` 
+
+```
+# useradd -g users -G wheel,storage,power -m manuel
+# passwd manuel
+```
+uncomment `# %wheel ALL=(ALL) ALL` in
+```
+# EDITOR=nano visudo
+```
 
 ### Optimise building
 
