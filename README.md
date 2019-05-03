@@ -9,24 +9,109 @@ Some general characteristics assumed:
 
 # Installation
 
+Set keyboard layout
+```
+loadkeys uk
+```
 Check internet connection
 ```
 ping -c 3 archlinux.org
 ```
-Use `reflector` package to set local fast mirrors. (This is 'automated' and many advise against it)
+Update System Clock
 ```
-pacman -Syy
-pacman -S reflector
-reflector -c "United Kingdom" -f 12 -l 10 -n 12 --save /etc/pacman.d/mirrorlist
+# timedatectl set-ntp true
 ```
-partition disk (mine is `nvme0n1`)
+
+## Partitioninng and mounting
+
+Partition disk (mine is `nvme0n1`)
 ```
-cgdisk /dev/nvme0n1
+# cgdisk /dev/nvme0n1
 ```
 Use existing EFI for dual-boot with Windows 10 (in my case `nvme0n1p2`) and no `swap`. Check EFI partition is at least 500mb! Mine wasn't and, as I do not know much about disk management, I used MiniTool Partition Wizard from Windows to
 
 1. Shrink Win10 Partition "upwards"
+2. Copy the empty 128mb reserved windows partition next to the new start of the main partition, and delete the old.
+3. Extend the EFI partition
 
+Format main partition (*nvme0n1p5*) with ext4
+
+```
+# mkfs.ext4 /dev/nvme0n1p5
+```
+
+Mount main and EFI (*nvme0n1p2*) partitions in `/mnt` and `/mnt/boot` respectively
+
+```
+# mount /dev/nvme0n1p5 /mnt && mkdir /mnt/boot && mount /dev/nvme0n1p2 /mnt/boot
+```
+## Installing system
+
+Use `reflector` package to set local fast mirrors. (This is 'automated' and many advise against it)
+```
+# pacman -Syy && pacman -S reflector && reflector -c "United Kingdom" -f 12 -l 10 -n 12 --save /etc/pacman.d/mirrorlist
+```
+Install `base` and `base-devel`
+```
+# pacstrap -i /mnt base base-devel
+```
+## Generate fstab
+```
+# genfstab -U -p /mnt >> /mnt/etc/fstab
+```
+## Login through chroot
+```
+# arch-chroot /mnt /bin/bash
+```
+## TZ and locale
+Set the time zone:
+```
+# ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
+```
+Run `hwclock` to generate `/etc/adjtime`:
+```
+# hwclock --systohc --utc
+```
+
+## Generate locale
+Uncomment `en_GB.UTF-8` in `/etc/locale.gen`, generate locale, and set permanently language and keyboardlayout
+```
+# sed -i 's/#en_GB.UTF-8/en_GB.UTF-8/g' /etc/locale.gen
+# locale-gen
+# echo 'LANG=EN_GB.UTF-8' > /etc/locale.conf
+# echo 'KEYMAP=uk' > /etc/vconsole.conf
+```
+## Network configuration
+```
+# echo 'archXPS' > /etc/hostname
+```
+Edit `/etc/hosts`
+```
+127.0.0.1  localhost
+::1        localhost
+127.0.1.1	 archXPS.localdomain	archXPS
+```
+Enable `dhcpcd` (disable later when enabling `NetworkManager`)
+```
+# systemctl enable dhcpcd
+```
+## Passwd and user
+```
+# passwd
+# useradd -g users -G wheel,storage,power -m manuel
+```
+## GRUB
+```
+# pacman -S grub os-prober efibootmgr
+# grub-install --target=x86_64-efi --efi-directory=/boot --bootlader-id=ArchLinux
+# grub-mkconfig -o /boot/grub/grub.cfg
+```
+## Finish
+```
+# exit
+# umount -R /mnt
+# reboot
+```
 
 # Set up
 
@@ -106,9 +191,9 @@ Some tools:
 
 ```
 yay -S thermald powertop s-tui mprime xsensors
-#sudo systemctl enable --now thermald
-#sudo systemctl start thermald
-sudo powertop
+# sudo systemctl enable --now thermald
+# sudo systemctl start thermald
+# sudo powertop
 ```
 
 
