@@ -169,6 +169,7 @@ First install Xorg
 ```
 # pacman -Syu kde-applications plasma plasma-wayland-session sddm
 # systemctl enable sddm
+# localectl set-x11-keymap uk
 ```
 #### Latte-Dock
 Install and set up super key to open app launcher. (Configure in between, most likely.)
