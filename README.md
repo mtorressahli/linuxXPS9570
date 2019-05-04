@@ -246,7 +246,7 @@ As explained [here](https://www.reddit.com/r/Dell/comments/alwour/xps_9570_disab
 ```
 # echo "1-7" | tee /sys/bus/usb/drivers/usb/unbind
 ```
-In case you want to re-enable it:
+In case you want to re-enable it (as there is development in progress (e.g. [Goodix92](https://github.com/IDerr/Goodix92), [goodix_fp_dump](https://gitlab.collabora.com/ao2/goodix_fp_dump) and [this libfprint issue](https://gitlab.freedesktop.org/libfprint/libfprint/issues/43):
 ```
 # echo "1-7" | tee /sys/bus/usb/drivers/usb/bind
 ```
