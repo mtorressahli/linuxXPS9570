@@ -160,23 +160,58 @@ yaourt -S pamac-aur yay
 
 ### KDE
 
-First install Xorg
-
+#### Xorg
 ```
 # pacman -Syu xorg xorg-init
-```
-
-```
-# pacman -Syu kde-applications plasma plasma-wayland-session sddm
-# systemctl enable sddm
 # localectl set-x11-keymap gb
 ```
+#### Plasma and KDE Apps
+```
+# pacman -Syu kde-applications plasma plasma-wayland-session sddm
+```
+#### SDDM
+```
+# systemctl enable sddm
+```
+Edit `/usr/lib/sddm/sddm.conf.d/default.conf` changing:
+
++ In `[Theme]` section:
+ ```
+ # Current theme name
+ Current=archlinux-simplyblack
+ 
+ # Cursor theme used in the greeter
+ CursorTheme=breeze-dark
+ ```
++ Under both `[Wayland]` and `[X11]`:
+ ```
+ EnableHiDPI=true
+ ```
+ Then create
+ ```
+ sudo mkdir /etc/sddm.conf.d
+ ```
+ And make file
+ ```
+ sudo nano /etc/sddm.conf.d/hidpi.conf
+ ```
+ containing
+ ```
+ [Wayland]
+EnableHiDPI=true
+
+[X11]
+EnableHiDPI=true
+
+ ```
+
+
+
 #### Latte-Dock
 Install and set up super key to open app launcher. (Configure in between, most likely.)
 ```
 sudo pacman -Syu latte-dock
 kwriteconfig5 --file ~/.config/kwinrc --group ModifierOnlyShortcuts --key Meta "org.kde.lattedock,/Latte,org.kde.LatteDock,activateLauncherMenu"
-th
 ```
 
 ### GNOME
