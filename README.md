@@ -241,6 +241,16 @@ yay -S thermald powertop s-tui mprime xsensors
 # sudo systemctl start thermald
 # sudo powertop
 ```
+## Disable Goodix Fingerprint Reader (not supported as of 2019.May.04
+As explained [here](https://www.reddit.com/r/Dell/comments/alwour/xps_9570_disabling_fingerprint_reader_in_linux/)
+```
+# echo "1-7" | tee /sys/bus/usb/drivers/usb/unbind
+```
+In case you want to re-enable it:
+```
+# echo "1-7" | tee /sys/bus/usb/drivers/usb/bind
+```
+
 ## Disable discrete GPU whwn not in use with Optimus/Bumblebee
 The optimus configuration is a technology that allows an Intel integrated GPU and discrete NVIDIA GPU to be built into and accessed by a laptop. As the discret NVIDIA GPU card eats lots of power, we want to use the intergrated Intel card most of the time and activate/desactivate the NVIDIA GPU card only when required by a defined application.
 
