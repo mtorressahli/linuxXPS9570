@@ -175,7 +175,8 @@ Install and set up super key to open app launcher. (Configure in between, most l
 ```
 sudo pacman -Syu latte-dock
 kwriteconfig5 --file ~/.config/kwinrc --group ModifierOnlyShortcuts --key Meta "org.kde.lattedock,/Latte,org.kde.LatteDock,activateLauncherMenu"
-th```
+th
+```
 
 ### GNOME
 
@@ -308,6 +309,26 @@ cat /sys/power/mem_sleep
 echo deep|sudo tee /sys/power/mem_sleep
 
 sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet/GRUB_CMDLINE_LINUX_DEFAULT="quiet mem_sleep_default=deep/g' /etc/default/grub  && sudo update-grub
+```
+#### In case of instantaneous wakeup
+Review the current configuration of wakeup devices:
+```
+cat /proc/acpi/wakeup
+
+Device  S-state   Status   Sysfs node
+...
+EHC1      S3    *enabled  pci:0000:00:1d.0
+EHC2      S3    *enabled  pci:0000:00:1a.0
+XHC       S3    *enabled  pci:0000:00:14.0
+...
+```
+
+The relevant devices are `EHC1`, `EHC2` and `XHC` (for USB 3.0). To toggle their state you have to echo the device name to the file as root.
+
+```
+# echo EHC1 > /proc/acpi/wakeup
+# echo EHC2 > /proc/acpi/wakeup
+# echo XHC > /proc/acpi/wakeup
 ```
 
 #### After suspend
