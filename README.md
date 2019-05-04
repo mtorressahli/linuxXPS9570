@@ -170,6 +170,12 @@ First install Xorg
 # pacman -Syu kde-applications plasma plasma-wayland-session sddm
 # systemctl enable sddm
 ```
+#### Latte-Dock
+Install and set up super key to open app launcher. (Configure in between, most likely.)
+```
+sudo pacman -Syu latte-dock
+kwriteconfig5 --file ~/.config/kwinrc --group ModifierOnlyShortcuts --key Meta "org.kde.lattedock,/Latte,org.kde.LatteDock,activateLauncherMenu"
+th```
 
 ### GNOME
 
