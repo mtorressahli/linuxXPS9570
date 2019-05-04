@@ -1,11 +1,13 @@
 # linuxXPS9570
 
-My installation of Linux in Dell XPS 9570. I am writing these notes for personal use and **I have not completed them yet**. If you are here by chance, you may make use of them but they are fitted to my specific experience and needs and I would not be able to help with anything (because I am not a particularly experienced linux user).
+My installation of ArchLinux with KDE (Plasma and applications) in Dell XPS 9570. I am writing these notes for personal use and **I have not completed them yet**. If you are here by chance, you may make use of them but they are fitted to my specific experience and needs and I would not be able to help with anything (because I am not a particularly experienced linux user).
 
 Some general characteristics assumed:
 
 + Keyboard = UK; language = UK English; timezone = UK London.
-+ Using wired internet connection
++ Using wired internet connection for installation
+
+The document has three sections: *Installation*, initial *Set up and tunning* , and *Personalization*; increasingly fitted to my personal needs.
 
 # Installation
 
@@ -21,7 +23,6 @@ Update System Clock
 ```
 # timedatectl set-ntp true
 ```
-
 ## Partitioninng and mounting
 
 Partition disk (mine is `nvme0n1`)
@@ -645,22 +646,13 @@ to `/etc/modules-load.d/webcam.conf` seems to be in the right direction.
 
 ### Display
 
-#### HiDPI — GNOME
 
-Since GNOME only manages scaling by integers, a screen like this one (relatively not that HiDPI in relatively small form factor) is better setup combining xrandr with GNOME scaling. First set scaling at the maximum convenient (2) and then 'zooming out' with xrandr (1.75x1.75). See the [Arch wiki for HiDPI](https://wiki.archlinux.org/index.php/HiDPI#Desktop_environments)
-```
-gsettings set org.gnome.settings-daemon.plugins.xsettings overrides "[{'Gdk/WindowScalingFactor', <2>}]"
-gsettings set org.gnome.desktop.interface scaling-factor 2
-xrandr --output eDP1 --scale 1.75x1.75
-```
 
 ### Bluetooth
 
-As of 25th of April 2019, it is necessary to install `bluez-git` (5.50.r295.g9e6da22ed-1 > 5.50-264-g750a26cd9) instead of `bluez` to make A2DP audio work with bluetooth headphones. Then, as commented [here](https://aur.archlinux.org/packages/bluez-git/#comment-688092), a manual fix is still required, modifying `/usr/lib/systemd/system/bluetooth.service` to change `ExecStart=/usr/lib/bluetooth/bluetoothd` to `ExecStart=/usr/lib/bluetoothd`. I also found necessary to change `#AutoEnable=false` to `AutoEnable=true` in `/etc/bluetooth/main.conf` so bluetooth would be enabled after suspension.
+Change`#AutoEnable=false` to `AutoEnable=true` in `/etc/bluetooth/main.conf` so bluetooth would be enabled at login screen (for mouse and keyboard when docked) and after suspension.
 
 ```
-yay -S bluez-git
-sudo sed -i 's_ExecStart=/usr/lib/bluetooth/bluetoothd_ExecStart=/usr/lib/bluetoothd_g' /usr/lib/systemd/system/bluetooth.service
 sudo sed -i 's/#AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
 ```
 
@@ -699,4 +691,25 @@ import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe0
 ## Firmware updates
 ```
 yay -S fwupd
+```
+
+# NO LONGER NEEDED/USED (2019 May 04)
+
+### Display
+#### HiDPI — GNOME
+
+Since GNOME only manages scaling by integers, a screen like this one (relatively not that HiDPI in relatively small form factor) is better setup combining xrandr with GNOME scaling. First set scaling at the maximum convenient (2) and then 'zooming out' with xrandr (1.75x1.75). See the [Arch wiki for HiDPI](https://wiki.archlinux.org/index.php/HiDPI#Desktop_environments)
+```
+gsettings set org.gnome.settings-daemon.plugins.xsettings overrides "[{'Gdk/WindowScalingFactor', <2>}]"
+gsettings set org.gnome.desktop.interface scaling-factor 2
+xrandr --output eDP1 --scale 1.75x1.75
+```
+
+### Bluetooth
+
+As of 25th of April 2019, it is necessary to install `bluez-git` (5.50.r295.g9e6da22ed-1 > 5.50-264-g750a26cd9) instead of `bluez` to make A2DP audio work with bluetooth headphones. Then, as commented [here](https://aur.archlinux.org/packages/bluez-git/#comment-688092), a manual fix is still required, modifying `/usr/lib/systemd/system/bluetooth.service` to change `ExecStart=/usr/lib/bluetooth/bluetoothd` to `ExecStart=/usr/lib/bluetoothd`. I also found necessary to change `#AutoEnable=false` to `AutoEnable=true` in `/etc/bluetooth/main.conf` so bluetooth would be enabled after suspension.
+
+```
+yay -S bluez-git
+sudo sed -i 's_ExecStart=/usr/lib/bluetooth/bluetoothd_ExecStart=/usr/lib/bluetoothd_g' /usr/lib/systemd/system/bluetooth.service
 ```
