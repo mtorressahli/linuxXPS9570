@@ -205,7 +205,36 @@ yay -S thermald powertop s-tui mprime xsensors
 # sudo systemctl start thermald
 # sudo powertop
 ```
+## Disable discrete GPU
+`bbswitch` method
 
+The discrete Nvidia GTX 1050 GPU is on by default and cannot be disabled in the UEFI settings. Even when idle, it uses a significant amount of power (about 7W). To disable it when not in use it is necessary to install `bbswitch` and `bumblebee`, 
+```
+yay -Syu bbswitch bumblebee
+```
+
+add `acpi_rev_override=1` to the Kernel parameters, enable `bumblebeed.service`, and reboot (you may need to reboot twice for the firmware to notice acpi_rev_override).
+```
+$ cat /proc/acpi/bbswitch
+```
+should now print
+```
+$ OFF
+```
+and
+```
+$ dmesg | grep bbswitch
+```
+should print something like
+```
+$ [    4.253642] bbswitch: loading out-of-tree module taints kernel.
+$ [    4.253833] bbswitch: version 0.8
+$ [    4.254093] bbswitch: Found integrated VGA device 0000:00:02.0: \_SB_.PCI0.GFX0
+$ [    4.254163] bbswitch: Found discrete VGA device 0000:01:00.0: \_SB_.PCI0.PEG0.PEGP
+$ [    4.254225] bbswitch: detected an Optimus _DSM function
+$ [    4.254282] bbswitch: Succesfully loaded. Discrete card 0000:01:00.0 is on
+$ [    4.256651] bbswitch: disabling discrete graphics
+```
 
 ### Dell Power Management
 
@@ -430,16 +459,6 @@ systemctl enable powertop.service
 
 ## Devices
 
-### Camera(s) NOT WORKING
-
-The camera uses the relatively new IPU3 drivers. Have not been able to make it work yet. (It seems that additionally to the kernel support it needs some *userspace* support which is being implemented, for example, in the `libcamera` package.) In any case adding
-
-```
-ipu3-csi2
-ipu3-imgu
-ipu3
-ipu3*
-```
 
 to `/etc/modules-load.d/webcam.conf` seems to be in the right direction.
 
