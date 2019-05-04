@@ -272,7 +272,7 @@ echo 'HWMON_MODULES="coretemp dell-smm-hwmon"' >> /etc/conf.d/lm_sensors
 ### Fan Control
 
 ```
-yay dell-bios-fan-control
+yay i8kutils dell-bios-fan-control
 sudo systemctl enable dell-bios-fan-control
 
 sudo modprobe -v i8k
