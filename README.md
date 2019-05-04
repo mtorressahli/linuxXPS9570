@@ -167,10 +167,11 @@ yaourt -S pamac-aur yay
 ```
 #### Plasma and KDE Apps
 ```
-# pacman -Syu kde-applications plasma plasma-wayland-session sddm
+# yay -Syu kde-applications plasma plasma-wayland-session
 ```
 #### SDDM
 ```
+# yay -Syu sddm archlinux-themes-sddm
 # systemctl enable sddm
 ```
 Edit `/usr/lib/sddm/sddm.conf.d/default.conf` changing:
@@ -548,14 +549,24 @@ sudo sed -i 's/#AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
 
 ## Software
 
+## Nordvpn
+
+```
+yay -Syu nordvpn
+sudo systemctl enable --now nordvpnsd
+systemctl --user enable --now nordvpnud
+sudo systemctl start nordvpnsd
+systemctl --user start nordvpnud
+
+```
+
+## General (R, LaTeX, VirtualBox, LibreOffice, ...)
 ```
 yay -Syu r texlive-bin texlive-core texlive-latexextra texlive-bibtexextra biber texlive-langextra texlive-fontsextra texlive-formatsextra texlive-humanities texlive-publishers texlive-pstricks texlive-science texlive-science virtualbox virtualbox-guest-iso virtualbox-host-modules-arch virtualbox-sdk telegram-desktop libreoffice-fresh libreoffice-fresh-en-gb
 ```
 ```
 yay -Syu tk gcc-fortran ed dialog java-runtime perl-tk psutils python2-pygments texlive-pictures java-environment virtualbox-ext-vnc ttf-opensans pstoedit libmythes beanshell unixodbc postgresql-libs mariadb-libs coin-or-mp gnome-shell-extension-appindicator-git libappindicator-gtk3
 ```
-
-
 ```
 yay -Syyu rstudio-desktop dropbox mendeleydesktop spotify skypeforlinux-stable-bin sublime-text-3-imfix tixati whatsapp-nativefier
 ```
