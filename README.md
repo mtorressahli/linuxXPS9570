@@ -122,7 +122,7 @@ Login as `root`
 # useradd -g users -G wheel,storage,power -m manuel
 # passwd manuel
 ```
-uncomment `# %wheel ALL=(ALL) ALL` in
+uncomment `# %wheel ALL=(ALL) ALL` — gives sudo permisison to group `wheel` — and add `Defaults !tty_tickets` — avoids entering password several times per session — in
 ```
 # EDITOR=nano visudo
 ```
@@ -205,8 +205,6 @@ EnableHiDPI=true
 EnableHiDPI=true
 
  ```
-
-
 
 #### Latte-Dock
 Install and set up super key to open app launcher. (Configure in between, most likely.)
@@ -372,7 +370,7 @@ Reboot and verify that nvidia is not loaded by running:
 ```
 Should not return anything
 
-Disconnect / unplug charger and verify the power consumption with powertop is around 5W on idle (Dell XPS 15 4570, powertop --auto-tune previously launched, FHD screen with no touchscreen)
+Disconnect / unplug charger and verify the power consumption with powertop is around 5W — FHD screen with no touchscreen — or 7.5W — 4K with touchscreen — on idle (`sudo powertop --auto-tune` previously launched).
 
 Enable GPU by using the `enablegpu.sh` script
 
